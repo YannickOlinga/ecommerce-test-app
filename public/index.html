@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Shop — Yannick Olinga</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      min-height: 100vh;
+    }
+    header {
+      background: #1e40af;
+      color: #fff;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header span { font-size: 0.85rem; opacity: 0.85; }
+    main { max-width: 720px; margin: 32px auto; padding: 0 16px; }
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+    h2 { font-size: 1rem; margin-bottom: 16px; }
+    label { display: block; font-size: 0.85rem; margin-bottom: 4px; color: #64748b; }
+    input, select, button {
+      font-size: 0.95rem;
+      padding: 8px 10px;
+      border-radius: 4px;
+      border: 1px solid #cbd5e1;
+    }
+    .field { margin-bottom: 12px; }
+    .field input, .field select { width: 100%; }
+    button {
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      padding: 8px 16px;
+    }
+    button:hover { background: #1d4ed8; }
+    .error { color: #b91c1c; font-size: 0.9rem; min-height: 1.2em; margin-top: 8px; }
+    .success { color: #15803d; font-size: 0.9rem; margin-top: 8px; }
+    .hidden { display: none; }
+    .product-list { list-style: none; }
+    .product-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      gap: 12px;
+    }
+    .product-name { font-weight: 500; }
+    .product-meta { font-size: 0.85rem; color: #64748b; }
+    .out-of-stock { color: #b91c1c; }
+    .preview-result {
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 0.9rem;
+      line-height: 1.8;
+    }
+    nav { display: flex; gap: 8px; }
+    nav button { background: rgba(255,255,255,0.15); font-size: 0.85rem; }
+    nav button.active { background: #fff; color: #1e40af; }
+
+    .divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 14px 0;
+      border: none;
+    }
+
+    .form-title {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>Mini Shop</h1>
+      <span>Par Yannick Olinga</span>
+    </div>
+    <nav id="nav" class="hidden">
+      <button data-view="products" data-testid="nav-products" class="active">Produits</button>
+      <button data-view="order" data-testid="nav-order">Commande</button>
+    </nav>
+    <p id="user-info" class="hidden" data-testid="user-info"></p>
+  </header>
+
+  <main>
+    <!-- Connexion -->
+    <section id="login-section" class="card">
+      <h2>Connexion</h2>
+      <form id="login-form">
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" data-testid="login-email" placeholder="yannick@example.com" />
+        </div>
+        <div class="field">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" data-testid="login-password" placeholder="Mot de passe" />
+        </div>
+        <button type="submit" data-testid="login-submit">Se connecter</button>
+        <p id="login-error" class="error" data-testid="login-error"></p>
+      </form>
+
+      <hr class="divider" />
+
+      <h2>Inscription</h2>
+      <form id="register-form">
+        <div class="field">
+          <label for="register-email">Email</label>
+          <input
+            type="email"
+            id="register-email"
+            data-testid="register-email"
+            placeholder="nouveau@example.com"
+            autocomplete="off"
+          />
+        </div>
+        <div class="field">
+          <label for="register-password">Mot de passe</label>
+          <input
+            type="password"
+            id="register-password"
+            data-testid="register-password"
+            placeholder="Mot de passe"
+            autocomplete="off"
+          />
+        </div>
+        <button type="submit" data-testid="register-submit">Créer le compte</button>
+        <p id="register-error" class="error" data-testid="register-error"></p>
+        <p id="register-success" class="success hidden" data-testid="register-success"></p>
+      </form>
+    </section>
+
+    <!-- Produits -->
+    <section id="products-section" class="card hidden">
+      <h2>Nos produits</h2>
+      <ul id="product-list" class="product-list" data-testid="product-list"></ul>
+    </section>
+
+    <!-- Aperçu commande -->
+    <section id="order-section" class="card hidden">
+      <h2>Aperçu de commande</h2>
+      <form id="order-form">
+        <div class="field">
+          <label for="product-select">Produit</label>
+          <select id="product-select" data-testid="order-product"></select>
+        </div>
+        <div class="field">
+          <label for="quantity">Quantité</label>
+          <input type="number" id="quantity" data-testid="order-quantity" value="1" min="1" />
+        </div>
+        <div class="field">
+          <label for="discount">Remise (%)</label>
+          <input type="number" id="discount" data-testid="order-discount" value="0" min="0" max="100" />
+        </div>
+        <div class="field">
+          <label for="weight">Poids (kg)</label>
+          <input type="number" id="weight" data-testid="order-weight" value="1" min="0" step="0.1" />
+        </div>
+        <button type="submit" data-testid="order-submit">Calculer le total</button>
+      </form>
+      <div id="preview-result" class="preview-result hidden" data-testid="preview-result"></div>
+      <p id="order-error" class="error" data-testid="order-error"></p>
+    </section>
+  </main>
+
+  <script>
+    let products = [];
+    let currentUser = null;
+
+    const loginSection = document.getElementById('login-section');
+    const productsSection = document.getElementById('products-section');
+    const orderSection = document.getElementById('order-section');
+    const nav = document.getElementById('nav');
+    const userInfo = document.getElementById('user-info');
+
+    function showView(view) {
+      productsSection.classList.toggle('hidden', view !== 'products');
+      orderSection.classList.toggle('hidden', view !== 'order');
+      nav.querySelectorAll('button').forEach((btn) => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+      });
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/products');
+      products = await res.json();
+      const list = document.getElementById('product-list');
+      const select = document.getElementById('product-select');
+      list.innerHTML = '';
+      select.innerHTML = '';
+
+      products.forEach((p) => {
+        const li = document.createElement('li');
+        li.dataset.testid = 'product-item';
+        const stockLabel = p.stock > 0 ? `${p.stock} en stock` : 'Rupture';
+        const stockClass = p.stock > 0 ? '' : 'out-of-stock';
+        li.innerHTML = `
+          <div>
+            <div class="product-name" data-testid="product-name">${p.name}</div>
+            <div class="product-meta ${stockClass}" data-testid="product-stock">${stockLabel}</div>
+          </div>
+          <div class="product-meta" data-testid="product-price">${p.price.toFixed(2)} €</div>
+        `;
+        list.appendChild(li);
+
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.name} — ${p.price.toFixed(2)} €`;
+        select.appendChild(opt);
+      });
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = '';
+
+      const res = await fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.textContent = data.error;
+        return;
+      }
+
+      currentUser = data.user;
+      loginSection.classList.add('hidden');
+      nav.classList.remove('hidden');
+      userInfo.classList.remove('hidden');
+      userInfo.textContent = `Connecté : ${currentUser.email}`;
+      await loadProducts();
+      showView('products');
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const errorEl = document.getElementById('register-error');
+      const successEl = document.getElementById('register-success');
+      errorEl.textContent = '';
+      successEl.classList.add('hidden');
+      successEl.textContent = '';
+
+      const email = document.getElementById('register-email').value;
+      const password = document.getElementById('register-password').value;
+
+      const res = await fetch('/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.textContent = data.error;
+        return;
+      }
+
+      // Petit confort : on remplit le formulaire de connexion avec les mêmes identifiants.
+      document.getElementById('email').value = data.user.email;
+      document.getElementById('password').value = password;
+
+      successEl.classList.remove('hidden');
+      successEl.textContent = 'Inscription réussie. Vous pouvez vous connecter.';
+    });
+
+    nav.addEventListener('click', (e) => {
+      if (e.target.dataset.view) showView(e.target.dataset.view);
+    });
+
+    document.getElementById('order-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('order-error');
+      const resultEl = document.getElementById('preview-result');
+      errorEl.textContent = '';
+      resultEl.classList.add('hidden');
+
+      const productId = Number(document.getElementById('product-select').value);
+      const product = products.find((p) => p.id === productId);
+      const quantity = Number(document.getElementById('quantity').value);
+      const discountPercent = Number(document.getElementById('discount').value);
+      const weightKg = Number(document.getElementById('weight').value);
+
+      const res = await fetch('/orders/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          items: [{ price: product.price, quantity }],
+          discountPercent,
+          shipping: { weightKg },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        errorEl.textContent = data.error;
+        return;
+      }
+
+      resultEl.classList.remove('hidden');
+      resultEl.innerHTML = `
+        Sous-total : ${data.subtotal.toFixed(2)} €<br>
+        Après remise (${data.discountPercent} %) : ${data.discountedTotal.toFixed(2)} €<br>
+        Livraison : ${data.shippingFee.toFixed(2)} €<br>
+        <strong>Total : ${data.total.toFixed(2)} €</strong>
+      `;
+    });
+  </script>
+</body>
+</html>
