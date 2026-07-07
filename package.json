@@ -1,0 +1,25 @@
+{
+  "name": "mini-shop",
+  "version": "1.0.0",
+  "description": "Mini application e-commerce — Qualité logicielle & tests (TP 2 + TP 3)",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "test": "jest --testPathPattern=tests",
+    "test:unit": "jest tests/unit",
+    "test:integration": "jest tests/integration",
+    "e2e": "playwright test"
+  },
+  "keywords": ["ecommerce", "tests", "qualite"],
+  "author": "Yannick Olinga",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.45.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
