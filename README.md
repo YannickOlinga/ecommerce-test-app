@@ -1,79 +1,75 @@
-# Rapport QA — TP Partie 3
+# Gestionnaire de tâches — Mini-projet Qualité logicielle & tests
 
-**Auteur : Yannick Olinga**
+Mini-projet réalisé en **TDD** dans le cadre du module Qualité logicielle & tests.
 
-## Présentation du projet
+Application de gestion de tâches : création, modification, priorités, tâches terminées, détection des tâches en retard.
 
-Mini application e-commerce permettant de se connecter, consulter des produits et calculer un aperçu de commande (sous-total, remise, livraison, total).
+## Stack
 
-- **Stack** : Node.js, Express, Jest, Supertest, Playwright, GitHub Actions
-- **Frontend** : page unique avec connexion, catalogue produits et formulaire de commande
+- **Backend** : Node.js + Express (API REST)
+- **Frontend** : HTML/CSS/JS simple (servi par Express)
+- **Tests unitaires & intégration** : Jest + Supertest
+- **Tests E2E** : Playwright
+- **CI/CD** : GitHub Actions
 
-## Rappel des tests unitaires du TP 2
+## Auteur
 
-| Fichier | Règles testées |
-|---|---|
-| `cart.js` | total panier, quantités, prix décimaux, panier vide |
-| `discount.js` | remise 0 %, 10 %, 100 %, remise invalide |
-| `shipping.js` | frais selon le poids, poids invalide |
-| `user-validation.js` | email valide/invalide, mot de passe valide/invalide |
-| `password-strength.js` | weak, medium, strong (TDD) |
-| `register-user.js` | création utilisateur, email bienvenue (mocks) |
+**Yannick Olinga**
 
-**Commande** : `npm run test:unit`
+## Installation
 
-## Tests d'intégration réalisés
+```bash
+npm install
+```
 
-| Route | Cas nominaux | Cas d'erreur |
+## Lancer l'application
+
+```bash
+npm run dev
+```
+
+Puis ouvrir http://localhost:3000
+
+## Lancer les tests
+
+```bash
+npm test                 # tous les tests (unitaires + intégration)
+npm run test:unit        # tests unitaires uniquement
+npm run test:integration # tests d'intégration uniquement
+npm run e2e              # test E2E (installe d'abord : npx playwright install chromium)
+```
+
+## Structure du projet
+
+```
+src/
+  domain/taskService.js   -> logique métier (testée unitairement)
+  routes/taskRoutes.js    -> routes API Express
+  app.js                  -> configuration Express
+  server.js               -> point d'entrée
+public/index.html         -> interface utilisateur
+tests/
+  unit/                   -> tests unitaires (Jest)
+  integration/            -> tests d'intégration API (Supertest)
+e2e/                      -> test end-to-end (Playwright)
+.github/workflows/ci.yml  -> pipeline CI
+QA_REPORT.md              -> rapport qualité
+```
+
+## Règles métier principales
+
+- une tâche sans titre (ou avec un titre vide) est refusée ;
+- la priorité doit être `basse`, `normale` ou `haute` ;
+- une tâche dont la date d'échéance est passée est « en retard » ;
+- une tâche terminée n'est **jamais** considérée comme en retard.
+
+## API
+
+| Méthode | Route | Description |
 |---|---|---|
-| `POST /register` | création compte + réponse sans mot de passe | email invalide, mot de passe invalide |
-| `POST /login` | connexion réussie, token | mauvais MDP, user inexistant, email/MDP manquant, pas de MDP dans réponse |
-| `GET /products` | liste, propriétés, types | — |
-| `POST /cart/total` | panier valide, vide, quantités, décimaux | body invalide, items manquant/incorrect |
-| `POST /orders/preview` | sous-total, remise, livraison, total | remise invalide, poids invalide, panier invalide, livraison manquante |
+| GET | /api/tasks | Liste des tâches (filtre `?status=terminee` ou `?status=en-cours`) |
+| GET | /api/tasks/late/count | Nombre de tâches en retard |
+| POST | /api/tasks | Créer une tâche `{ title, priority?, dueDate? }` |
+| PUT | /api/tasks/:id | Modifier une tâche |
+| PATCH | /api/tasks/:id/done | Marquer comme terminée |
 
-**Commande** : `npm run test:integration`
-
-## Tests E2E réalisés
-
-Fichier : `e2e/shop.spec.js` (Playwright)
-
-| Parcours | Description |
-|---|---|
-| Connexion + produits | login → confirmation utilisateur → liste avec noms, prix, stocks |
-| Aperçu commande | login → formulaire → calcul → affichage du total |
-
-**Sélecteurs** : `data-testid` uniquement.
-
-## Choix de l'outil E2E
-
-**Playwright** — démarrage automatique du serveur (`webServer`), API moderne, tests lisibles.
-
-## Utilisation de la vraie API ou d'une interception
-
-Vraie API : les tests E2E appellent le serveur Express réel. Aucune interception réseau.
-
-| Avantage | Limite |
-| parcours réaliste | plus lent qu'un mock |
-| détecte les vrais problèmes d'intégration | sensible à l'environnement (port, navigateur) |
-
-Pipeline CI/CD
-
-Fichier : `.github/workflows/ci.yml`
-
-- Déclenchement : push et pull request
-- Étapes : `npm ci` → tests unitaires → tests intégration → E2E (Chromium)
-- En cas d'échec : pipeline rouge, job E2E bloqué si les tests rapides échouent
-Limites de la stratégie actuelle
-
-- Données en mémoire (pas de vraie base)
-- Pas de tests de performance
-- E2E sur Chromium uniquement
-- Pas de couverture publiée en CI
-
-Améliorations possibles
-
-- Base de données de test avec reset automatique
-- `jest --coverage` dans la CI
-- Tests de performance légers (k6)
-- Tests d'accessibilité
