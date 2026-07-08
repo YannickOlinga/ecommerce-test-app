@@ -1,20 +1,16 @@
 # Gestionnaire de tâches — Mini-projet Qualité logicielle & tests
 
-Mini-projet réalisé en **TDD** dans le cadre du module Qualité logicielle & tests.
+Mini-projet réalisé en **TDD** dans le cadre du module **Qualité logicielle & tests**.
 
 Application de gestion de tâches : création, modification, priorités, tâches terminées, détection des tâches en retard.
 
 ## Stack
 
-- **Backend** : Node.js + Express (API REST)
-- **Frontend** : HTML/CSS/JS simple (servi par Express)
-- **Tests unitaires & intégration** : Jest + Supertest
-- **Tests E2E** : Playwright
-- **CI/CD** : GitHub Actions
-
-## Auteur
-
-**Yannick Olinga**
+- Backend : Node.js + Express (API REST)
+- Frontend : HTML/CSS/JS simple (servi par Express)
+- Tests unitaires & intégration : Jest + Supertest
+- Tests E2E : Playwright
+- CI/CD : GitHub Actions
 
 ## Installation
 
@@ -61,7 +57,7 @@ QA_REPORT.md              -> rapport qualité
 - une tâche sans titre (ou avec un titre vide) est refusée ;
 - la priorité doit être `basse`, `normale` ou `haute` ;
 - une tâche dont la date d'échéance est passée est « en retard » ;
-- une tâche terminée n'est **jamais** considérée comme en retard.
+- une tâche terminée n'est jamais considérée comme en retard.
 
 ## API
 
