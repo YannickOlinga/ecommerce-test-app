@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestionnaire de tâches — Yannick Olinga</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f3f4f6;
+      color: #111827;
+      max-width: 820px;
+      margin: 28px auto;
+      padding: 0 16px;
+    }
+
+    h1 { font-size: 1.6rem; margin-bottom: 4px; }
+    .subtitle { color: #6b7280; margin-bottom: 18px; }
+
+    .card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 18px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    form { display: grid; grid-template-columns: 1fr 180px 180px 140px; gap: 10px; margin-bottom: 14px; }
+    input, select, button { padding: 10px 12px; font-size: 1rem; border-radius: 8px; border: 1px solid #e5e7eb; }
+    button { cursor: pointer; background: #2563eb; border-color: #2563eb; color: #fff; font-weight: 600; }
+    button:hover { background: #1d4ed8; }
+    button:focus, input:focus, select:focus { outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.25); border-color: #93c5fd; }
+
+    .row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .row label { color: #374151; font-weight: 600; font-size: 0.95rem; }
+
+    .error {
+      color: #b91c1c;
+      min-height: 1.2em;
+      margin: 10px 0 14px;
+      font-weight: 600;
+    }
+
+    .pill { font-size: 0.78rem; padding: 4px 10px; border-radius: 999px; background: #f3f4f6; color: #111827; font-weight: 700; }
+    .pill.haute { background: #fee2e2; color: #991b1b; }
+    .pill.normale { background: #e0f2fe; color: #075985; }
+    .pill.basse { background: #dcfce7; color: #166534; }
+
+    ul { list-style: none; padding: 0; margin: 0; }
+    li {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 12px;
+      border-top: 1px solid #f3f4f6;
+    }
+    li:last-child { border-bottom-left-radius: 12px; border-bottom-right-radius: 12px; }
+
+    li.done .title { text-decoration: line-through; color: #6b7280; }
+    li.late .title { color: #b91c1c; font-weight: 800; }
+
+    .title { font-weight: 650; }
+    .meta { color: #6b7280; font-size: 0.95rem; }
+
+    .empty {
+      padding: 14px 0;
+      color: #6b7280;
+      font-weight: 600;
+    }
+
+    @media (max-width: 720px) {
+      form { grid-template-columns: 1fr 1fr; }
+      li { grid-template-columns: 1fr auto; grid-template-rows: auto auto; }
+    }
+  </style>
+</head>
+<body>
+  <h1>Gestionnaire de tâches</h1>
+  <div class="subtitle">Par Yannick Olinga</div>
+
+  <div class="card">
+    <form id="task-form">
+      <input type="text" id="task-title" data-testid="task-title-input" placeholder="Titre" />
+      <select id="task-priority" data-testid="task-priority-select">
+        <option value="basse">Basse</option>
+        <option value="normale" selected>Normale</option>
+        <option value="haute">Haute</option>
+      </select>
+      <input type="date" id="task-dueDate" data-testid="task-dueDate-input" />
+      <button type="submit" data-testid="task-submit">Ajouter</button>
+    </form>
+
+    <div class="row">
+      <label for="filter">Filtre :</label>
+      <select id="filter" data-testid="task-filter">
+        <option value="">Toutes</option>
+        <option value="en-cours">En cours</option>
+        <option value="terminee">Terminées</option>
+      </select>
+      <span class="meta" data-testid="late-count">En retard : 0</span>
+    </div>
+
+    <p id="error-message" class="error" data-testid="error-message"></p>
+    <ul id="task-list" data-testid="task-list"></ul>
+  </div>
+
+  <script>
+    const form = document.getElementById('task-form');
+    const titleInput = document.getElementById('task-title');
+    const prioritySelect = document.getElementById('task-priority');
+    const dueDateInput = document.getElementById('task-dueDate');
+    const filterSelect = document.getElementById('filter');
+    const list = document.getElementById('task-list');
+    const errorMessage = document.getElementById('error-message');
+    const lateCountEl = document.querySelector('[data-testid="late-count"]');
+
+    async function loadLateCount() {
+      const res = await fetch('/api/tasks/late/count');
+      const data = await res.json();
+      lateCountEl.textContent = `En retard : ${data.count}`;
+    }
+
+    function formatDueDate(dueDate) {
+      if (!dueDate) return '—';
+      return new Date(dueDate).toLocaleDateString('fr-FR');
+    }
+
+    async function loadTasks() {
+      const status = filterSelect.value;
+      const url = status ? `/api/tasks?status=${encodeURIComponent(status)}` : '/api/tasks';
+      const res = await fetch(url);
+      const tasks = await res.json();
+
+      list.innerHTML = '';
+
+      if (tasks.length === 0) {
+        const empty = document.createElement('li');
+        empty.className = 'empty';
+        empty.textContent = 'Aucune tâche pour le moment.';
+        list.appendChild(empty);
+        return;
+      }
+
+      const now = new Date();
+      tasks.forEach((task) => {
+        const li = document.createElement('li');
+        li.dataset.testid = 'task-item';
+        if (task.done) li.classList.add('done');
+        if (!task.done && task.dueDate && new Date(task.dueDate) < now) li.classList.add('late');
+
+        const title = document.createElement('div');
+        title.className = 'title';
+        title.textContent = task.title;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = `Échéance : ${formatDueDate(task.dueDate)}`;
+
+        const left = document.createElement('div');
+        left.appendChild(title);
+        left.appendChild(meta);
+
+        const prio = document.createElement('span');
+        prio.className = `pill ${task.priority}`;
+        prio.textContent = task.priority;
+
+        li.appendChild(left);
+        li.appendChild(prio);
+
+        if (!task.done) {
+          const btn = document.createElement('button');
+          btn.textContent = 'Terminer';
+          btn.dataset.testid = 'task-done-button';
+          btn.addEventListener('click', async () => {
+            await fetch(`/api/tasks/${task.id}/done`, { method: 'PATCH' });
+            await refresh();
+          });
+          li.appendChild(btn);
+        } else {
+          const placeholder = document.createElement('div');
+          li.appendChild(placeholder);
+        }
+
+        list.appendChild(li);
+      });
+    }
+
+    async function refresh() {
+      errorMessage.textContent = '';
+      await loadTasks();
+      await loadLateCount();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorMessage.textContent = '';
+
+      const payload = {
+        title: titleInput.value,
+        priority: prioritySelect.value,
+        dueDate: dueDateInput.value ? dueDateInput.value : null,
+      };
+
+      const res = await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        errorMessage.textContent = data.error;
+        return;
+      }
+
+      titleInput.value = '';
+      dueDateInput.value = '';
+      await refresh();
+    });
+
+    filterSelect.addEventListener('change', refresh);
+
+    refresh();
+  </script>
+</body>
+</html>
+
