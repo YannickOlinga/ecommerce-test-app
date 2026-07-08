@@ -1,6 +1,7 @@
 # Gestionnaire de tâches — Mini-projet Qualité logicielle & tests
 
 Mini-projet réalisé en **TDD** dans le cadre du module Qualité logicielle & tests.
+Mini-projet réalisé en **TDD** dans le cadre du module **Qualité logicielle & tests**.
 
 Application de gestion de tâches : création, modification, priorités, tâches terminées, détection des tâches en retard.
 
